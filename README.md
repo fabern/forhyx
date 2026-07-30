@@ -51,9 +51,12 @@ The `enviornment_forhyx.yml` was created with:
 
 cd ~/GitHub/fabern/forhyx
 
-conda create -n forhyx python=3.11
+conda create -n forhyx python=3.14 -c conda-forge
 conda activate forhyx
-conda install -c conda-forge xarray dask distributed dask-core netcdf4 h5netcdf h5py cftime numpy pandas
+conda install xarray dask distributed dask-core netcdf4 h5netcdf h5py cftime numpy pandas
+
+conda env export > enviornment_forhyx.yml
+conda export --from-history > enviornment_forhyx_from_history.yml
 ```
 
 #### Use conda

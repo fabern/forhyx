@@ -23,7 +23,6 @@ out_directory = '/storage/scratch/giub_geco/fbernhard/FORHYX/'
 # A) PCWD:
 
 # B) PCWD:
-# TODO
 pcwd_input_path = '/storage/capacity/occr_geco/data_2/archive/era5land_munoz-sabater_2021/data_derived_03_daily_pcwd.narm_v2-doy-reset_netcdf'
 
 ## some configurations
@@ -43,8 +42,9 @@ def list_netcdf_files(root_dir, pattern):
 if __name__ == '__main__':
 
     # cluster = LocalCluster(n_workers=min(64, int(os.environ['SLURM_NPROCS'])), threads_per_worker=1)
-    # TODO: reactivate this: cluster = LocalCluster(n_workers=min(64, int(os.environ['SLURM_CPUS_PER_TASK'])), threads_per_worker=1)
-    cluster = LocalCluster(n_workers=4, threads_per_worker=1)
+    # cluster = LocalCluster(n_workers=4, threads_per_worker=1)
+
+    cluster = LocalCluster(n_workers=min(64, int(os.environ['SLURM_CPUS_PER_TASK'])), threads_per_worker=1)
     # client = Client(address=cluster)
     with Client(address=cluster) as client:
         print('Cluster setup: ', flush=True)
@@ -53,6 +53,7 @@ if __name__ == '__main__':
 
         ### Step 2: Loop over different target variables
         vars = ['pcwd', 'sce']
+        #curr_var = vars[0]
         for curr_var in vars:
 
             ### Step 3: Check presence/absence and validity of NetCDF Files
@@ -98,7 +99,7 @@ if __name__ == '__main__':
             )
 
             ### Step 5: Aggregate in time (weekly) and in space (to regions)
-            regions = gpd.read_file('data/regions/shapefile/regions.shp')
+            regions = gpd.read_file('/storage/homefs/fb24k097/GitHub/fabern/forhyx/data/regions/shapefile/regions.shp')
             
             # ensure there is a human-readable name column if you want one
             if 'region_name' not in regions.columns:
@@ -178,5 +179,7 @@ if __name__ == '__main__':
             
             csv_path = os.path.join(out_directory, f'{curr_var}_regional_weekly.csv')
             pcwd_weekly_df.to_csv(csv_path, index_label='time')
-            print(f'Wrote weekly regional PCWD to {csv_path}', flush=True)
+            print(f'\n\nWrote weekly regional PCWD to {csv_path}', flush=True)
+            print('########################\n\n', flush=True)
+
 

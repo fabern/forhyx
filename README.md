@@ -4,7 +4,17 @@ This repository contains the code for the FORHYX project
 
 ## Use
 
-Run `data-raw/pre-process.py`.
+Data preparation was done by running:
+    - `data-raw/01_download_scalar_indices.py`.
+    - `data-raw/02_aggregate_predictors.py`.
+    - `data-raw/03_compute_targets.py`.
+    - `data-raw/04_aggregate_targets.py`.
+
+Required input:
+    - TODO: document
+Result:
+    - `data/predictors.zarr`
+    - TODO: `data/targets.zarr`
 
 ## Structure
 
@@ -19,11 +29,11 @@ data/
 ├─ predictors/
 ```
 
-### Capturing your environment
+## Computing environment
 
-Use a conda environment specified by 
+Use a conda environment specified by `enviornment_forhyx.yml`.
 
-#### Install Miniconda
+### Install Miniconda
 
 On UBELIX this is not needed. Simply do: `module load Anaconda3`
 On a local machine, do:
@@ -35,7 +45,8 @@ bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
 rm ~/miniconda3/miniconda.sh
 ```
 
-#### Install dependencies
+### Install dependencies
+
 It should be enough on a new machine to do:
 ```
 conda create --file environment_forhyx.yml
@@ -54,26 +65,34 @@ cd ~/GitHub/fabern/forhyx
 conda create -n forhyx python=3.14 -c conda-forge
 conda activate forhyx
 conda install xarray dask distributed dask-core netcdf4 h5netcdf h5py cftime numpy pandas
+conda install matplotlib geopandas regionmask
 
 conda env export > enviornment_forhyx.yml
 conda export --from-history > enviornment_forhyx_from_history.yml
 ```
 
-#### Use conda
-To activate Miniconda in the current shell use the following command:
+### Run code
 
-`source ~/miniconda3/bin/activate`
+After setup of the environment (see above) python code can be run by 
+activating the conda environment.
 
-To deactivate it run
+To activate conda in the current shell use the following command:
+```
+conda activate forhyx
+# run python
+conda deactivate
+```
 
-`conda deactivate`
+For UBELIX use the following snippet for interactive python execution:
+```
+srun --account=invest --qos=job_icpu-stocker --ntasks=1 --cpus-per-task=34 --mem-per-cpu=3G --job-name="dev_aggregation --time=8:00:00 --pty bash
+module load cURL/8.11.1-GCCcore-14.2.0 OpenSSL/3
+module load Anaconda3
+eval "$(conda shell.bash hook)"
 
-### Installing Dependencies
-
-Install gdal dependency separately.
-
-`conda install -y -c conda-forge gdal zarr`
-
-Go to the `python` directory of the project and install the needed requirements using
-
-`pip install -r requirements.txt`
+conda activate forhyx
+# # run python
+# python3
+conda deactivate
+```
+or then use bash scripts based on the above.

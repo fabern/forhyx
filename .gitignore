@@ -37,3 +37,6 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Preprocessed, analysis-ready data in this project is too large to check into git:
+data/

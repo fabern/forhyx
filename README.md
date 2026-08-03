@@ -51,8 +51,12 @@ It should be enough on a new machine to do:
 ```
 conda env create --file environment_forhyx.yml
 ```
+If that doesn't work, try installing the packages without enforcing specific versions:
+```
+conda env create --file environment_forhyx_from_history.yml
+```
 
-If that doesn't work create your own environment.
+If that doesn't work either create your own environment manually following the steps below, which were used to setup the initial environment.
 The `environment_forhyx.yml` was created with:
 ```
 # on UBELIX: srun --account=invest --qos=job_icpu-stocker --ntasks=1 --cpus-per-task=2 --mem-per-cpu=6G --job-name="setup_conda" --time=1:00:00 --pty bash

@@ -1,6 +1,6 @@
 #! /usr/bin/bash -l
-#SBATCH --job-name="02_FORHYX_aggregate_predictors"
-#SBATCH --time=04:00:00
+#SBATCH --job-name="03_FORHYX_compute_SCE"
+#SBATCH --time=18:00:00
 
 #SBATCH --account=invest          ### invest           ### FOR DEVELOPMENT: gratis
 #SBATCH --qos=job_icpu-stocker    ### job_icpu-stocker ### FOR DEVELOPMENT: job_debug (AND ensure not to use capacity storage!)
@@ -30,7 +30,7 @@ cd ~/GitHub/fabern/forhyx/data-raw
 
 echo "Start python script: $(date --rfc-3339=seconds)"
 conda activate forhyx
-python3 02_aggregate_predictors.py
+python3 03_compute_targets.py
 conda deactivate
 
 echo "Finished on: $(date --rfc-3339=seconds)"

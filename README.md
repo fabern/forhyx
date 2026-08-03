@@ -70,6 +70,7 @@ conda create -n forhyx python=3.14 -c conda-forge
 conda activate forhyx
 conda install xarray dask distributed dask-core netcdf4 h5netcdf h5py cftime numpy pandas
 conda install matplotlib geopandas regionmask
+conda install cartopy scikit-image metpy
 
 conda env export > environment_forhyx.yml
 conda export --from-history > environment_forhyx_from_history.yml

@@ -31,7 +31,7 @@ data/
 
 ## Computing environment
 
-Use a conda environment specified by `enviornment_forhyx.yml`.
+Use a conda environment specified by `environment_forhyx.yml`.
 
 ### Install Miniconda
 
@@ -49,11 +49,11 @@ rm ~/miniconda3/miniconda.sh
 
 It should be enough on a new machine to do:
 ```
-conda create --file environment_forhyx.yml
+conda env create --file environment_forhyx.yml
 ```
 
 If that doesn't work create your own environment.
-The `enviornment_forhyx.yml` was created with:
+The `environment_forhyx.yml` was created with:
 ```
 # on UBELIX: srun --account=invest --qos=job_icpu-stocker --ntasks=1 --cpus-per-task=2 --mem-per-cpu=6G --job-name="setup_conda" --time=1:00:00 --pty bash
 # on UBELIX: module load cURL/8.11.1-GCCcore-14.2.0 OpenSSL/3  # on UBELIX HPC
@@ -67,8 +67,8 @@ conda activate forhyx
 conda install xarray dask distributed dask-core netcdf4 h5netcdf h5py cftime numpy pandas
 conda install matplotlib geopandas regionmask
 
-conda env export > enviornment_forhyx.yml
-conda export --from-history > enviornment_forhyx_from_history.yml
+conda env export > environment_forhyx.yml
+conda export --from-history > environment_forhyx_from_history.yml
 ```
 
 ### Run code

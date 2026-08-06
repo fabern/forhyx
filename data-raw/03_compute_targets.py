@@ -45,6 +45,7 @@ input_path    = '/storage/scratch/giub_geco/fbernhard/ERA5_aggregated_newCodeNew
 
 out_directory = '/storage/scratch/giub_geco/fbernhard/FORHYX/'
 # os.makedirs(out_directory, exist_ok=True)
+# ll -h /storage/scratch/giub_geco/fbernhard/FORHYX/03*
 # rm -r /storage/scratch/giub_geco/fbernhard/FORHYX/03*
 
 
@@ -100,7 +101,7 @@ if __name__ == "__main__":
         vars_regex = re.compile(r'.*\.(?:' + '|'.join(map(re.escape, all_vars)) + r')\..*\.nc$')
         netcdf_files2 = [ s for s in netcdf_files if vars_regex.match(s) ]
 
-        print("All files to treat:")
+        print("All files to treat:", flush=True)
         pprint.pp(netcdf_files2)
 
         ### Step 4: Compute severe convective environments (SCE) (code adapted from https://github.com/feldmann-m/EU_conv)
@@ -119,16 +120,22 @@ if __name__ == "__main__":
             join='inner', #join='exact', # TODO: go back to exact
             chunks={"valid_time": "auto", "latitude": "auto", "longitude": "auto"})
         
-        # pl_data = pl_data.sel(          # TODO: remove this subset (only used for development)
-        #     longitude = slice(0,15),    # TODO: remove this subset (only used for development)
-        #     latitude  = slice(47,40))   # TODO: remove this subset (only used for development)
-        pl_data = pl_data.sel(valid_time = slice("2024-01-01", None)) # TODO: remove this subset (only used for development)
+        pl_data = pl_data.sel(valid_time = slice("2020-01-01", None)) # TODO: remove this subset (only used for development)
+        # subset the European regions extent: [-7.625 32.625 30.125 54.625]
+        pl_data = pl_data.sel(latitude  = slice(60,25))
+        # pl_data = xr.concat([
+        #     pl_data.sel(longitude=slice(350, 360)),
+        #     pl_data.sel(longitude=slice(0, 35))
+        #     ], dim='longitude')
+        pl_data = pl_data.assign_coords(longitude=(((pl_data.longitude + 180) % 360) - 180))
+        pl_data = pl_data.sortby('longitude')
+        pl_data = pl_data.sel(longitude=slice(-10, 35))  # 10°W..35°E
 
         verbose = True
-        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': computing shear')
+        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': computing shear', flush=True)
         # sfc_data_2['shear'] = ((pl_data.u.sel(level=500)**2 + pl_data.v.sel(level=500)**2)**0.5 - (pl_data.u.sel(level=900)**2 + pl_data.v.sel(level=900)**2)**0.5).squeeze()
-        du = pl_data.mean_u.sel(pressure_level=500) - pl_data.mean_u.sel(pressure_level=900)
-        dv = pl_data.mean_v.sel(pressure_level=500) - pl_data.mean_v.sel(pressure_level=900)
+        du = pl_data.mean_u.sel(pressure_level=500) - pl_data.mean_u.sel(pressure_level=925) # TODO change to 925
+        dv = pl_data.mean_v.sel(pressure_level=500) - pl_data.mean_v.sel(pressure_level=925) # TODO change to 925
 
         sfc_data_2={}
         sfc_data_2['shear'] = (du**2 + dv**2)**0.5                # TODO(fabian): is this the same as 3 lines prior? shear = (u5^2 + v5^2)^0.5 - (u9^2 + v9^2)^0.5 = A - B
@@ -138,11 +145,12 @@ if __name__ == "__main__":
                                                                 #                                                  shear   = sqrt(u5^2 + v5^2 + u9^2 + v9^2 - 2*()^0.5) # ????
         for key, da in sfc_data_2.items():
             da.name = key
-        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': converting array to xarray dataset')
+        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': converting array to xarray dataset', flush=True)
         #sfc_data_2 = xr.Dataset(sfc_data_2,compat='override')
         sfc_data_2_dataset = xr.merge(list(sfc_data_2.values()), compat='override')
-        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': writing shear dataset')
+        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': writing shear dataset', flush=True)
         shear_fname = os.path.join(out_directory, f'03_era5-pressure-levels_UTCDaily.500_925_shear.nc')
+        print(sfc_data_2_dataset, flush = True)
         sfc_data_2_dataset.to_netcdf(shear_fname)
 
         #### Step 4b: compute gridpoint-wise boolean if convective
@@ -159,10 +167,16 @@ if __name__ == "__main__":
             compat='no_conflicts',
             join='inner', #join='exact', # TODO: go back to exact
             chunks={"valid_time": "auto", "latitude": "auto", "longitude": "auto"})
-        # sfc_data_1 = sfc_data_1.sel(          # TODO: remove this subset (only used for development)
-        #             longitude = slice(7,8),   # TODO: remove this subset (only used for development)
-        #             latitude  = slice(47,46)) # TODO: remove this subset (only used for development)
-        sfc_data_1 = sfc_data_1.sel(valid_time = slice("2024-01-01", None)) # TODO: remove this subset (only used for development)
+        sfc_data_1 = sfc_data_1.sel(valid_time = slice("2020-01-01", None)) # TODO: remove this subset (only used for development)
+        # subset the European regions extent: [-7.625 32.625 30.125 54.625]
+        sfc_data_1 = sfc_data_1.sel(latitude  = slice(60,25))
+        # sfc_data_1 = xr.concat([
+        #     sfc_data_1.sel(longitude=slice(350, 360)),
+        #     sfc_data_1.sel(longitude=slice(0, 35))
+        #     ], dim='longitude')
+        sfc_data_1 = sfc_data_1.assign_coords(longitude=(((sfc_data_1.longitude + 180) % 360) - 180))
+        sfc_data_1 = sfc_data_1.sortby('longitude')
+        sfc_data_1 = sfc_data_1.sel(longitude=slice(-10, 35))  # 10°W..35°E
 
         cape = sfc_data_1.max_cape
         shear = xr.open_mfdataset(shear_fname, combine="by_coords").shear
@@ -180,16 +194,17 @@ if __name__ == "__main__":
         conv['conv_EU'] = (cape > 500) & (shear > 10) # US was: (cape > 1000) & (shear > 20)
         for key, da in conv.items():
             da.name = key
-        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': converting array to xarray dataset')
+        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': converting array to xarray dataset', flush=True)
         #sfc_data_2 = xr.Dataset(sfc_data_2,compat='override')
         conv_dataset = xr.merge(list(conv.values()), compat='override')
-        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': writing conv dataset')
+        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': writing conv dataset', flush=True)
         conv_fname = os.path.join(out_directory, f'03_era5-pressure-levels_UTCDaily.conv.nc')
+        print(conv_dataset, flush = True)
         conv_dataset.to_netcdf(conv_fname)
 
 
         #### Steb 5c: analyse spatial coherence (blops) to define SCE
-        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': reading data')
+        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': reading data', flush=True)
         ticc = timeit.default_timer()
         conv = xr.open_dataset(conv_fname).conv_EU
 
@@ -199,7 +214,7 @@ if __name__ == "__main__":
         cp_r = cp
         cp_bin = cp_r > 0
 
-        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': retrieving object properties')
+        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': retrieving object properties', flush=True)
         maxtime=len(conv.valid_time)
 
         SCE_OBJ_fname_csv = os.path.join(out_directory, f'03_era5-pressure-levels_UTCDaily.SCE.tttt.csv')
@@ -228,12 +243,12 @@ if __name__ == "__main__":
                 ilon = np.nanmean(xx); ilat = np.nanmean(yy)
                 ilon2 = np.round(ilon).astype(int); ilat2 = np.round(ilat).astype(int)
 
-                if ilon2 >= len(conv.lon): ilon2=len(conv.lon)-1
+                if ilon2 >= len(conv.longitude): ilon2=len(conv.longitude)-1
                 if ilon2 < 0 : ilon2=0
-                if ilat2 >= len(conv.lat): ilat2=len(conv.lat)-1
+                if ilat2 >= len(conv.latitude): ilat2=len(conv.latitude)-1
                 if ilat2 < 0 : ilat2=0
 
-                lon = conv.lon.isel(lon=ilon2); lat = conv.lat.isel(lat=ilat2)
+                lon = conv.longitude.isel(longitude=ilon2); lat = conv.latitude.isel(latitude=ilat2)
                 t_p['itime']=t
                 t_p['time']=conv.valid_time.isel(valid_time=t).values
                 t_p['label']=lab
@@ -247,9 +262,9 @@ if __name__ == "__main__":
                 a1+=1
 
                 tracked_properties = pd.concat([tracked_properties,t_p])
-            if t%100==0 and t>0: # intermediate save i.e save every 100 time steps of the growing DataFrame into (*.csv and *.nc)
+            if (t%100==0 and t>0) or range(maxtime): # intermediate save i.e save every 100 time steps of the growing DataFrame into (*.csv and *.nc)
                 toc = timeit.default_timer()
-                print('Timestep '+str(t)+' out of '+str(maxtime)+', duration '+str((toc-tic)/60)+' min')
+                print('Timestep '+str(t)+' out of '+str(maxtime)+', duration '+str((toc-tic)/60)+' min', flush=True)
                 tracked_properties.to_csv(SCE_OBJ_fname_csv.replace("tttt",str(t))) # time step specific fname
                 tracked_properties = pd.DataFrame(columns=['time','itime','label','size','precip','ilat','ilon','lat','lon'])
                 tracked_regions_xr = xr.DataArray(
@@ -259,18 +274,19 @@ if __name__ == "__main__":
                 )
                 # tracked_regions_xr = copy.deepcopy(conv[t-100:t,:,:])
                 # tracked_regions_xr.data = conv_obj[t-100:t,:,:]
+                print(tracked_regions_xr, flush = True)
                 tracked_regions_xr.to_netcdf(SCE_OBJ_fname_nc.replace("tttt",str(t))) # time step specific fname
-        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': saving final data')
+        if verbose: print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"),': saving final data', flush=True)
         # tracked_properties.to_csv(scr_data+str(t)+'conv_obj.csv')
 
 
         tocc = timeit.default_timer()
-        print('total script time '+str((tocc-ticc)/60)+' min')
+        print('total script time '+str((tocc-ticc)/60)+' min', flush=True)
 
 
 
         # MERGE DATA
-        print('merging data')
+        print('merging data', flush=True)
         
         files = sorted(glob(SCE_OBJ_fname_csv.replace("tttt",'*')))
         #pprint.pp(files)
@@ -278,35 +294,32 @@ if __name__ == "__main__":
         for file in files:
             if a1==0:
                 tracked_properties = pd.read_csv(file)
-                print(tracked_properties.shape)
+                print(tracked_properties.shape, flush=True)
             else:
                 tracked_properties_2 =  pd.read_csv(file)
-                print(tracked_properties_2.shape)
+                print(tracked_properties_2.shape, flush=True)
                 tracked_properties = pd.concat([tracked_properties,tracked_properties_2])
-                print(tracked_properties.shape)
+                print(tracked_properties.shape, flush=True)
             a1+=1
         tracked_properties = tracked_properties.drop(columns='Unnamed: 0')
 
-        print(tracked_properties.shape)
+        print(tracked_properties.shape, flush=True)
         tracked_properties.to_csv(SCE_OBJ_fname_csv.replace("tttt","all-steps")) # sotre final
 
-        # NOTE: this only goes to day 300 instead of 365: files = sorted(glob(SCE_OBJ_fname_nc.replace("tttt",'*')))
-        # NOTE: this only goes to day 300 instead of 365: #pprint.pp(files)
-        # NOTE: this only goes to day 300 instead of 365: data = xr.open_mfdataset(files)
-        data = tracked_regions_xr
+        files = sorted(glob(SCE_OBJ_fname_nc.replace("tttt",'[0-9]*')))
+        #pprint.pp(files)
+        data = xr.open_mfdataset(files).rename_vars({'__xarray_dataarray_variable__':'SCE_ID'})
+        print(data, flush = True)
         data.to_netcdf(SCE_OBJ_fname_nc.replace("tttt","all-steps"))
 
+        # plt.figure()
+        # data.sel(longitude = slice(0,30), latitude = slice(65,25)).isel(valid_time=181)
+        # data.sel(longitude = slice(0,30), latitude = slice(65,25)).isel(valid_time=181)['SCE'].plot();
+        # data.sel(longitude = slice(0,30), latitude = slice(65,25)
+        #                 ).sel(valid_time="2022-06-27")['SCE'].plot();
+        # plt.savefig('figure_SCE.png')
 
         # xr.open_dataset(SCE_OBJ_fname_nc.replace("tttt","all-steps"))
-
-
-
-
-
-
-
-
-
 
                         # # For output..... TODO
                         # compr_level = 5

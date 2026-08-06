@@ -28,6 +28,8 @@ pwd
 
 cd ~/GitHub/fabern/forhyx/data-raw
 
+rm -r /storage/scratch/giub_geco/fbernhard/FORHYX/03* # delet old outputs
+
 echo "Start python script: $(date --rfc-3339=seconds)"
 conda activate forhyx
 python3 03_compute_targets.py
